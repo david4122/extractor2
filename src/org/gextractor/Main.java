@@ -16,10 +16,10 @@ public class Main extends JFrame{
 	JCheckBox methods=new JCheckBox("Methods");
 	JCheckBox shortNames=new JCheckBox("Short names");
 	JTextField searchPhrase=new JTextField(10);
-	JButton rescan=new JButton("Research");
-	JCheckBox deep=new JCheckBox("Deep");
+	JButton rescan=new JButton("Rescan");
 	JTextArea ifaces=new JTextArea();
 	JTextArea tree=new JTextArea();
+	JCheckBox declared=new JCheckBox("Declared");
 
 	Main(){
 		super("Java Class Extractor");
@@ -30,7 +30,7 @@ public class Main extends JFrame{
 		JPanel topbar=new JPanel(new FlowLayout());
 		topbar.add(new JLabel("Full class name: "));
 		topbar.add(query);
-		topbar.add(new JLabel("Keyword or pattern to search:"));
+		topbar.add(new JLabel("Keyword or regex to search for:"));
 		topbar.add(searchPhrase);
 		add(topbar, BorderLayout.NORTH);
 		JPanel opts=new JPanel();
@@ -38,16 +38,21 @@ public class Main extends JFrame{
 		opts.setLayout(new BoxLayout(opts, BoxLayout.Y_AXIS));
 		opts.add(fields);
 		fields.setSelected(true);
+		fields.setToolTipText("Print fields");
 		opts.add(ctors);
 		ctors.setSelected(true);
+		ctors.setToolTipText("Print class' constructors");
 		opts.add(methods);
 		methods.setSelected(true);
+		methods.setToolTipText("Print methods");
 		JSeparator sep=new JSeparator();
 		sep.setMaximumSize(new Dimension(1000, 10));
 		opts.add(sep);
 		opts.add(shortNames);
+		shortNames.setToolTipText("Print only simple name of type");
 		shortNames.setSelected(true);
-		opts.add(deep);
+		opts.add(declared);
+		declared.setToolTipText("Print declared fields and methods");
 		sep=new JSeparator();
 		sep.setMaximumSize(new Dimension(1000, 10));
 		opts.add(sep);
@@ -71,16 +76,16 @@ public class Main extends JFrame{
 
 		final ActionListener al=new ActionListener(){
 			public void actionPerformed(ActionEvent e){
+				results.setText("");
+				ifaces.setText("");
+				tree.setText("");
 				Class<?>cl;
 				try{
 					cl=Class.forName(query.getText());
 				} catch(ClassNotFoundException ex){
-					results.setText("Class not found: "+ex);
+					JOptionPane.showMessageDialog(null, "Class not found:\n"+ex, "ClassNotFoundException", JOptionPane.ERROR_MESSAGE);
 					return;
 				}
-				results.setText("");
-				ifaces.setText("");
-				tree.setText("");
 				Pattern p;
 				Pattern phrase;
 				if(searchPhrase.getText().length()>0)
@@ -95,19 +100,15 @@ public class Main extends JFrame{
 				String s;
 				if(fields.isSelected()){
 					results.append("\tFIELDS:\n");
-					for(Field i: cl.getFields()){
-						if(phrase.matcher(i.toString()).find())
-							results.append(p.matcher(i.toString()).replaceAll("")+'\n');
-					}
-					if(deep.isSelected()){
-						Class<?>base=cl;
-						do{
-							for(Field i: base.getFields()){
-								if(phrase.matcher(i.toString()).find())
-									results.append(p.matcher(i.toString()).replaceAll("")+'\n');
-							}
-							base=base.getSuperclass();
-						} while(base!=Object.class);
+					if(declared.isSelected()){
+						for(Field i: cl.getDeclaredFields())
+							if(phrase.matcher(i.toString()).find())
+								results.append(p.matcher(i.toString()).replaceAll("")+'\n');
+					} else{
+						for(Field i: cl.getFields()){
+							if(phrase.matcher(i.toString()).find())
+								results.append(p.matcher(i.toString()).replaceAll("")+'\n');
+						}
 					}
 				}
 				if(ctors.isSelected()){
@@ -118,18 +119,14 @@ public class Main extends JFrame{
 				}
 				if(methods.isSelected()){
 					results.append("\tMETHODS\n");
-					for(Method i: cl.getMethods())
-						if(phrase.matcher(i.toString()).find())
-							results.append(p.matcher(i.toString()).replaceAll("")+'\n');
-					if(deep.isSelected()){
-						Class<?>base=cl;
-						do{
-							for(Method i: base.getMethods()){
-								if(phrase.matcher(i.toString()).find())
-									results.append(p.matcher(i.toString()).replaceAll("")+'\n');
-							}
-							base=base.getSuperclass();
-						} while(base!=null);
+					if(declared.isSelected()){
+						for(Method i: cl.getDeclaredMethods())
+							if(phrase.matcher(i.toString()).find())
+								results.append(p.matcher(i.toString()).replaceAll("")+'\n');
+					} else {
+						for(Method i: cl.getMethods())
+							if(phrase.matcher(i.toString()).find())
+								results.append(p.matcher(i.toString()).replaceAll("")+'\n');
 					}
 				}
 				Class<?>c=cl;
