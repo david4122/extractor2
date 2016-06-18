@@ -34,6 +34,7 @@ public class Main extends JFrame{
 		topbar.add(searchPhrase);
 		add(topbar, BorderLayout.NORTH);
 		JPanel opts=new JPanel();
+		opts.setBorder(new TitledBorder("Options"));
 		opts.setLayout(new BoxLayout(opts, BoxLayout.Y_AXIS));
 		opts.add(fields);
 		fields.setSelected(true);
@@ -61,7 +62,11 @@ public class Main extends JFrame{
 		JPanel south=new JPanel();
 		south.setLayout(new BoxLayout(south, BoxLayout.X_AXIS));
 		south.add(ifaces);
+		ifaces.setEditable(false);
+		ifaces.setBorder(new TitledBorder("Implemented interfaces"));
 		south.add(tree);
+		tree.setEditable(false);
+		tree.setBorder(new TitledBorder("Inherits from"));
 		add(south, BorderLayout.SOUTH);
 
 		final ActionListener al=new ActionListener(){
@@ -124,13 +129,13 @@ public class Main extends JFrame{
 									results.append(p.matcher(i.toString()).replaceAll("")+'\n');
 							}
 							base=base.getSuperclass();
-						} while(base!=Object.class);
+						} while(base!=null);
 					}
 				}
 				Class<?>c=cl;
 				for(Class<?>i: cl.getInterfaces())
 					ifaces.append(i.getName()+"\n");
-				while(cl!=Object.class){
+				while(cl!=null){
 					tree.append(cl.getName()+'\n');
 					cl=cl.getSuperclass();
 				}
