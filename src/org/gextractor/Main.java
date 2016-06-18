@@ -11,25 +11,26 @@ import java.util.regex.*;
 public class Main extends JFrame{
 	JTextField query=new JTextField(20);
 	JTextArea results=new JTextArea();
-	JTextArea additional=new JTextArea();
 	JCheckBox fields=new JCheckBox("Fields");
 	JCheckBox ctors=new JCheckBox("Constructors");
 	JCheckBox methods=new JCheckBox("Methods");
 	JCheckBox shortNames=new JCheckBox("Short names");
-	JCheckBox ifaces=new JCheckBox("Intefaces");
-	JCheckBox tree=new JCheckBox("Base classes");
 	JTextField searchPhrase=new JTextField(10);
-	JButton research=new JButton("Research");
+	JButton rescan=new JButton("Research");
 	JCheckBox deep=new JCheckBox("Deep");
+	JTextArea ifaces=new JTextArea();
+	JTextArea tree=new JTextArea();
 
 	Main(){
 		super("Java Class Extractor");
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setSize(800, 700);
+		setLocation(50,50);
 		setLayout(new BorderLayout());
 		JPanel topbar=new JPanel(new FlowLayout());
 		topbar.add(new JLabel("Full class name: "));
 		topbar.add(query);
+		topbar.add(new JLabel("Keyword or pattern to search:"));
 		topbar.add(searchPhrase);
 		add(topbar, BorderLayout.NORTH);
 		JPanel opts=new JPanel();
@@ -42,10 +43,6 @@ public class Main extends JFrame{
 		methods.setSelected(true);
 		JSeparator sep=new JSeparator();
 		sep.setMaximumSize(new Dimension(1000, 10));
-		opts.add(ifaces);
-		ifaces.setSelected(true);
-		opts.add(tree);
-		tree.setSelected(true);
 		opts.add(sep);
 		opts.add(shortNames);
 		shortNames.setSelected(true);
@@ -53,17 +50,19 @@ public class Main extends JFrame{
 		sep=new JSeparator();
 		sep.setMaximumSize(new Dimension(1000, 10));
 		opts.add(sep);
-		opts.add(research);
-		research.setEnabled(false);
+		opts.add(rescan);
+		rescan.setEnabled(false);
 		add(opts, BorderLayout.WEST);
 		JPanel center=new JPanel();
 		center.setLayout(new BoxLayout(center, BoxLayout.Y_AXIS));
 		center.add(new JScrollPane(results));
 		results.setEditable(false);
 		add(center, BorderLayout.CENTER);
-		add(additional, BorderLayout.SOUTH);
-		additional.setPreferredSize(new Dimension(getSize().width, 200));
-		additional.setEditable(false);
+		JPanel south=new JPanel();
+		south.setLayout(new BoxLayout(south, BoxLayout.X_AXIS));
+		south.add(ifaces);
+		south.add(tree);
+		add(south, BorderLayout.SOUTH);
 
 		final ActionListener al=new ActionListener(){
 			public void actionPerformed(ActionEvent e){
@@ -75,6 +74,8 @@ public class Main extends JFrame{
 					return;
 				}
 				results.setText("");
+				ifaces.setText("");
+				tree.setText("");
 				Pattern p;
 				Pattern phrase;
 				if(searchPhrase.getText().length()>0)
@@ -109,16 +110,6 @@ public class Main extends JFrame{
 					for(Constructor<?>i: cl.getConstructors())
 						if(phrase.matcher(i.toString()).find())
 							results.append(p.matcher(i.toString()).replaceAll("")+'\n');
-					if(deep.isSelected()){
-						Class<?>base=cl;
-						do{
-							for(Constructor<?>i: base.getConstructors()){
-								if(phrase.matcher(i.toString()).find())
-									results.append(p.matcher(i.toString()).replaceAll("")+'\n');
-							}
-							base=base.getSuperclass();
-						} while(base!=Object.class);
-					}
 				}
 				if(methods.isSelected()){
 					results.append("\tMETHODS\n");
@@ -136,19 +127,21 @@ public class Main extends JFrame{
 						} while(base!=Object.class);
 					}
 				}
-				if(ifaces.isSelected()){
-					additional.append("Implemented interfaces:\n");
-					for(Class<?>i: cl.getInterfaces())
-						additional.append(i.getName()+"\n");
+				Class<?>c=cl;
+				for(Class<?>i: cl.getInterfaces())
+					ifaces.append(i.getName()+"\n");
+				while(cl!=Object.class){
+					tree.append(cl.getName()+'\n');
+					cl=cl.getSuperclass();
 				}
-				if(!research.isEnabled())
-					research.setEnabled(true);
+				if(!rescan.isEnabled())
+					rescan.setEnabled(true);
 			}
 		};
 		query.addActionListener(al);
 		searchPhrase.addActionListener(al);
 		
-		research.addActionListener(new ActionListener(){
+		rescan.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent e){
 				al.actionPerformed(new ActionEvent(al, 0, ""));
 			}
