@@ -95,14 +95,14 @@ public class Main extends JFrame{
 				String s;
 				if(fields.isSelected()){
 					results.append("\tFIELDS:\n");
-					for(Field i: cl.getDeclaredFields()){
+					for(Field i: cl.getFields()){
 						if(phrase.matcher(i.toString()).find())
 							results.append(p.matcher(i.toString()).replaceAll("")+'\n');
 					}
 					if(deep.isSelected()){
 						Class<?>base=cl;
 						do{
-							for(Field i: base.getDeclaredFields()){
+							for(Field i: base.getFields()){
 								if(phrase.matcher(i.toString()).find())
 									results.append(p.matcher(i.toString()).replaceAll("")+'\n');
 							}
@@ -118,13 +118,13 @@ public class Main extends JFrame{
 				}
 				if(methods.isSelected()){
 					results.append("\tMETHODS\n");
-					for(Method i: cl.getDeclaredMethods())
+					for(Method i: cl.getMethods())
 						if(phrase.matcher(i.toString()).find())
 							results.append(p.matcher(i.toString()).replaceAll("")+'\n');
 					if(deep.isSelected()){
 						Class<?>base=cl;
 						do{
-							for(Method i: base.getDeclaredMethods()){
+							for(Method i: base.getMethods()){
 								if(phrase.matcher(i.toString()).find())
 									results.append(p.matcher(i.toString()).replaceAll("")+'\n');
 							}
