@@ -4,18 +4,23 @@ import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
 import javax.swing.event.*;
+import javax.swing.border.*;
 import java.lang.reflect.*;
 import java.util.regex.*;
 
 public class Main extends JFrame{
 	JTextField query=new JTextField(20);
 	JTextArea results=new JTextArea();
+	JTextArea additional=new JTextArea();
 	JCheckBox fields=new JCheckBox("Fields");
 	JCheckBox ctors=new JCheckBox("Constructors");
 	JCheckBox methods=new JCheckBox("Methods");
 	JCheckBox shortNames=new JCheckBox("Short names");
+	JCheckBox ifaces=new JCheckBox("Intefaces");
+	JCheckBox tree=new JCheckBox("Base classes");
 	JTextField searchPhrase=new JTextField(10);
 	JButton research=new JButton("Research");
+	JCheckBox deep=new JCheckBox("Deep");
 
 	Main(){
 		super("Java Class Extractor");
@@ -36,19 +41,29 @@ public class Main extends JFrame{
 		opts.add(methods);
 		methods.setSelected(true);
 		JSeparator sep=new JSeparator();
-		Dimension sepDim=sep.getPreferredSize();
-		sep.setMaximumSize(new Dimension(sepDim.width, 10));
+		sep.setMaximumSize(new Dimension(1000, 10));
+		opts.add(ifaces);
+		ifaces.setSelected(true);
+		opts.add(tree);
+		tree.setSelected(true);
 		opts.add(sep);
 		opts.add(shortNames);
 		shortNames.setSelected(true);
+		opts.add(deep);
+		sep=new JSeparator();
+		sep.setMaximumSize(new Dimension(1000, 10));
 		opts.add(sep);
 		opts.add(research);
+		research.setEnabled(false);
 		add(opts, BorderLayout.WEST);
 		JPanel center=new JPanel();
 		center.setLayout(new BoxLayout(center, BoxLayout.Y_AXIS));
 		center.add(new JScrollPane(results));
 		results.setEditable(false);
 		add(center, BorderLayout.CENTER);
+		add(additional, BorderLayout.SOUTH);
+		additional.setPreferredSize(new Dimension(getSize().width, 200));
+		additional.setEditable(false);
 
 		final ActionListener al=new ActionListener(){
 			public void actionPerformed(ActionEvent e){
@@ -78,19 +93,56 @@ public class Main extends JFrame{
 						if(phrase.matcher(i.toString()).find())
 							results.append(p.matcher(i.toString()).replaceAll("")+'\n');
 					}
+					if(deep.isSelected()){
+						Class<?>base=cl;
+						do{
+							for(Field i: base.getDeclaredFields()){
+								if(phrase.matcher(i.toString()).find())
+									results.append(p.matcher(i.toString()).replaceAll("")+'\n');
+							}
+							base=base.getSuperclass();
+						} while(base!=Object.class);
+					}
 				}
 				if(ctors.isSelected()){
 					results.append("\tCONSTRUCTORS:\n");
 					for(Constructor<?>i: cl.getConstructors())
 						if(phrase.matcher(i.toString()).find())
 							results.append(p.matcher(i.toString()).replaceAll("")+'\n');
+					if(deep.isSelected()){
+						Class<?>base=cl;
+						do{
+							for(Constructor<?>i: base.getConstructors()){
+								if(phrase.matcher(i.toString()).find())
+									results.append(p.matcher(i.toString()).replaceAll("")+'\n');
+							}
+							base=base.getSuperclass();
+						} while(base!=Object.class);
+					}
 				}
 				if(methods.isSelected()){
 					results.append("\tMETHODS\n");
 					for(Method i: cl.getDeclaredMethods())
 						if(phrase.matcher(i.toString()).find())
 							results.append(p.matcher(i.toString()).replaceAll("")+'\n');
+					if(deep.isSelected()){
+						Class<?>base=cl;
+						do{
+							for(Method i: base.getDeclaredMethods()){
+								if(phrase.matcher(i.toString()).find())
+									results.append(p.matcher(i.toString()).replaceAll("")+'\n');
+							}
+							base=base.getSuperclass();
+						} while(base!=Object.class);
+					}
 				}
+				if(ifaces.isSelected()){
+					additional.append("Implemented interfaces:\n");
+					for(Class<?>i: cl.getInterfaces())
+						additional.append(i.getName()+"\n");
+				}
+				if(!research.isEnabled())
+					research.setEnabled(true);
 			}
 		};
 		query.addActionListener(al);
