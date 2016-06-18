@@ -16,7 +16,6 @@ public class Main extends JFrame{
 	JCheckBox methods=new JCheckBox("Methods");
 	JCheckBox shortNames=new JCheckBox("Short names");
 	JTextField searchPhrase=new JTextField(10);
-	JButton rescan=new JButton("Rescan");
 	JTextArea ifaces=new JTextArea();
 	JTextArea tree=new JTextArea();
 	JCheckBox declared=new JCheckBox("Declared");
@@ -56,8 +55,6 @@ public class Main extends JFrame{
 		sep=new JSeparator();
 		sep.setMaximumSize(new Dimension(1000, 10));
 		opts.add(sep);
-		opts.add(rescan);
-		rescan.setEnabled(false);
 		add(opts, BorderLayout.WEST);
 		JPanel center=new JPanel();
 		center.setLayout(new BoxLayout(center, BoxLayout.Y_AXIS));
@@ -132,22 +129,29 @@ public class Main extends JFrame{
 				Class<?>c=cl;
 				for(Class<?>i: cl.getInterfaces())
 					ifaces.append(i.getName()+"\n");
+				StringBuilder sb=new StringBuilder();
 				while(cl!=null){
-					tree.append(cl.getName()+'\n');
+					sb.insert(0, cl.getName()+'\n');
 					cl=cl.getSuperclass();
 				}
-				if(!rescan.isEnabled())
-					rescan.setEnabled(true);
+				tree.append(sb.toString());
 			}
 		};
 		query.addActionListener(al);
 		searchPhrase.addActionListener(al);
 		
-		rescan.addActionListener(new ActionListener(){
-			public void actionPerformed(ActionEvent e){
-				al.actionPerformed(new ActionEvent(al, 0, ""));
+		class CBChangeListener implements ChangeListener{
+			public void stateChanged(ChangeEvent e){
+				if(query.getText().length()>0)
+					al.actionPerformed(new ActionEvent(al, 0, ""));
 			}
-		});
+		}
+		CBChangeListener cbcl=new CBChangeListener();
+		fields.addChangeListener(cbcl);
+		ctors.addChangeListener(cbcl);
+		methods.addChangeListener(cbcl);
+		shortNames.addChangeListener(cbcl);
+		declared.addChangeListener(cbcl);
 
 		setVisible(true);
 	}
