@@ -24,6 +24,8 @@ public class Main extends JFrame{
 	JCheckBox declared=new JCheckBox("Declared");
 	JFileChooser fileChooser=new JFileChooser();
 	JButton openFile=new JButton("<html><center>Load class from<br/>*.jar file");
+	JButton rescan=new JButton("Rescan");
+	Class<?>last;
 
 	Main(){
 		super("Java Class Extractor");
@@ -61,6 +63,9 @@ public class Main extends JFrame{
 		sep.setMaximumSize(new Dimension(1000, 10));
 		opts.add(sep);
 		opts.add(openFile);
+		opts.add(rescan);
+		rescan.setEnabled(false);
+		rescan.setHorizontalGlue();
 		add(opts, BorderLayout.WEST);
 		JPanel center=new JPanel();
 		center.setLayout(new BoxLayout(center, BoxLayout.Y_AXIS));
@@ -76,29 +81,35 @@ public class Main extends JFrame{
 		tree.setEditable(false);
 		tree.setBorder(new TitledBorder("Inherits from"));
 		add(south, BorderLayout.SOUTH);
+		fileChooser.setFileFilter(new FileNameExtensionFilter("JAR file", "jar"));
 
 		final ActionListener al=new ActionListener(){
 			public void actionPerformed(ActionEvent e){
-				results.setText("");
-				ifaces.setText("");
-				tree.setText("");
-				Class<?>cl;
 				try{
-					cl=Class.forName(query.getText());
+					last=Class.forName(query.getText());
 				} catch(ClassNotFoundException ex){
 					JOptionPane.showMessageDialog(null, "Class not found:\n"+ex, "ClassNotFoundException", JOptionPane.ERROR_MESSAGE);
 					return;
 				}
-				printData(cl);
+				printData(last);
+				if(!rescan.isEnabled())
+					rescan.setEnabled(true);
 			}
 		};
 		query.addActionListener(al);
 		searchPhrase.addActionListener(al);
+
+		final ActionListener rescanListener=new ActionListener(){
+			public void actionPerformed(ActionEvent ev){
+				printData(last);
+			}
+		};
+		rescan.addActionListener(rescanListener);
 		
 		class CBChangeListener implements ChangeListener{
 			public void stateChanged(ChangeEvent e){
 				if(query.getText().length()>0)
-					al.actionPerformed(new ActionEvent(al, 0, ""));
+					rescanListener.actionPerformed(new ActionEvent(rescanListener, 0, ""));
 			}
 		}
 		CBChangeListener cbcl=new CBChangeListener();
@@ -112,19 +123,22 @@ public class Main extends JFrame{
 			public void actionPerformed(ActionEvent e){
 				int respond=fileChooser.showOpenDialog(null);
 				if(respond==JFileChooser.APPROVE_OPTION){
-					fileChooser.setFileFilter(new FileNameExtensionFilter("JAR file", "jar"));
 					File file=fileChooser.getSelectedFile();
 					String className=JOptionPane.showInputDialog(null, "Enter full class name", "");
 					try{
 						URL url=file.toURL();
-						Class<?>cl=new URLClassLoader(new URL[]{url}).loadClass(className);
-						printData(cl);
+						last=new URLClassLoader(new URL[]{url}).loadClass(className);
+						printData(last);
+						if(!rescan.isEnabled())
+							rescan.setEnabled(true);
 					} catch(NoClassDefFoundError er){
 						JOptionPane.showMessageDialog(null, "Class def not found:\n"+er, "ERROR", JOptionPane.ERROR_MESSAGE);
 					} catch(ClassNotFoundException ex){
 						JOptionPane.showMessageDialog(null, "Class not found:\n"+file+' '+ex, "ClassNotFoundException", JOptionPane.ERROR_MESSAGE);
 					} catch(MalformedURLException ex){
 						JOptionPane.showMessageDialog(null, "URL malformed!", "MalformedURLException", JOptionPane.ERROR_MESSAGE);
+					} catch(Exception ex){
+						JOptionPane.showMessageDialog(null, "EXCEPTION: "+ex, "Exception", JOptionPane.ERROR_MESSAGE);
 					}
 				}
 			}
@@ -134,6 +148,10 @@ public class Main extends JFrame{
 	}
 
 	void printData(Class<?>cl){
+		results.setText("");
+		ifaces.setText("");
+		tree.setText("");
+		query.setText(cl.getName());
 		Pattern p;
 		Pattern phrase;
 		if(searchPhrase.getText().length()>0)
