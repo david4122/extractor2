@@ -7,6 +7,9 @@ import javax.swing.event.*;
 import javax.swing.border.*;
 import java.lang.reflect.*;
 import java.util.regex.*;
+import java.io.*;
+import java.net.*;
+import javax.swing.filechooser.*;
 
 public class Main extends JFrame{
 	JTextField query=new JTextField(20);
@@ -19,6 +22,8 @@ public class Main extends JFrame{
 	JTextArea ifaces=new JTextArea();
 	JTextArea tree=new JTextArea();
 	JCheckBox declared=new JCheckBox("Declared");
+	JFileChooser fileChooser=new JFileChooser();
+	JButton openFile=new JButton("<html><center>Load class from<br/>*.jar file");
 
 	Main(){
 		super("Java Class Extractor");
@@ -55,6 +60,7 @@ public class Main extends JFrame{
 		sep=new JSeparator();
 		sep.setMaximumSize(new Dimension(1000, 10));
 		opts.add(sep);
+		opts.add(openFile);
 		add(opts, BorderLayout.WEST);
 		JPanel center=new JPanel();
 		center.setLayout(new BoxLayout(center, BoxLayout.Y_AXIS));
@@ -83,58 +89,7 @@ public class Main extends JFrame{
 					JOptionPane.showMessageDialog(null, "Class not found:\n"+ex, "ClassNotFoundException", JOptionPane.ERROR_MESSAGE);
 					return;
 				}
-				Pattern p;
-				Pattern phrase;
-				if(searchPhrase.getText().length()>0)
-					phrase=Pattern.compile(searchPhrase.getText());
-				else
-					phrase=Pattern.compile(".*");
-				
-				if(shortNames.isSelected())
-					p=Pattern.compile("\\w+\\.");
-				else
-					p=Pattern.compile("");
-				String s;
-				if(fields.isSelected()){
-					results.append("\tFIELDS:\n");
-					if(declared.isSelected()){
-						for(Field i: cl.getDeclaredFields())
-							if(phrase.matcher(i.toString()).find())
-								results.append(p.matcher(i.toString()).replaceAll("")+'\n');
-					} else{
-						for(Field i: cl.getFields()){
-							if(phrase.matcher(i.toString()).find())
-								results.append(p.matcher(i.toString()).replaceAll("")+'\n');
-						}
-					}
-				}
-				if(ctors.isSelected()){
-					results.append("\tCONSTRUCTORS:\n");
-					for(Constructor<?>i: cl.getConstructors())
-						if(phrase.matcher(i.toString()).find())
-							results.append(p.matcher(i.toString()).replaceAll("")+'\n');
-				}
-				if(methods.isSelected()){
-					results.append("\tMETHODS\n");
-					if(declared.isSelected()){
-						for(Method i: cl.getDeclaredMethods())
-							if(phrase.matcher(i.toString()).find())
-								results.append(p.matcher(i.toString()).replaceAll("")+'\n');
-					} else {
-						for(Method i: cl.getMethods())
-							if(phrase.matcher(i.toString()).find())
-								results.append(p.matcher(i.toString()).replaceAll("")+'\n');
-					}
-				}
-				Class<?>c=cl;
-				for(Class<?>i: cl.getInterfaces())
-					ifaces.append(i.getName()+"\n");
-				StringBuilder sb=new StringBuilder();
-				while(cl!=null){
-					sb.insert(0, cl.getName()+'\n');
-					cl=cl.getSuperclass();
-				}
-				tree.append(sb.toString());
+				printData(cl);
 			}
 		};
 		query.addActionListener(al);
@@ -153,7 +108,84 @@ public class Main extends JFrame{
 		shortNames.addChangeListener(cbcl);
 		declared.addChangeListener(cbcl);
 
+		openFile.addActionListener(new ActionListener(){
+			public void actionPerformed(ActionEvent e){
+				int respond=fileChooser.showOpenDialog(null);
+				if(respond==JFileChooser.APPROVE_OPTION){
+					fileChooser.setFileFilter(new FileNameExtensionFilter("JAR file", "jar"));
+					File file=fileChooser.getSelectedFile();
+					String className=JOptionPane.showInputDialog(null, "Enter full class name", "");
+					try{
+						URL url=file.toURL();
+						Class<?>cl=new URLClassLoader(new URL[]{url}).loadClass(className);
+						printData(cl);
+					} catch(NoClassDefFoundError er){
+						JOptionPane.showMessageDialog(null, "Class def not found:\n"+er, "ERROR", JOptionPane.ERROR_MESSAGE);
+					} catch(ClassNotFoundException ex){
+						JOptionPane.showMessageDialog(null, "Class not found:\n"+file+' '+ex, "ClassNotFoundException", JOptionPane.ERROR_MESSAGE);
+					} catch(MalformedURLException ex){
+						JOptionPane.showMessageDialog(null, "URL malformed!", "MalformedURLException", JOptionPane.ERROR_MESSAGE);
+					}
+				}
+			}
+		});
+
 		setVisible(true);
+	}
+
+	void printData(Class<?>cl){
+		Pattern p;
+		Pattern phrase;
+		if(searchPhrase.getText().length()>0)
+			phrase=Pattern.compile(searchPhrase.getText());
+		else
+			phrase=Pattern.compile(".*");
+		
+		if(shortNames.isSelected())
+			p=Pattern.compile("\\w+\\.");
+		else
+			p=Pattern.compile("");
+		String s;
+		if(fields.isSelected()){
+			results.append("\tFIELDS:\n");
+			if(declared.isSelected()){
+				for(Field i: cl.getDeclaredFields())
+					if(phrase.matcher(i.toString()).find())
+						results.append(p.matcher(i.toString()).replaceAll("")+'\n');
+			} else{
+				for(Field i: cl.getFields()){
+					if(phrase.matcher(i.toString()).find())
+						results.append(p.matcher(i.toString()).replaceAll("")+'\n');
+				}
+			}
+		}
+		if(ctors.isSelected()){
+			results.append("\tCONSTRUCTORS:\n");
+			for(Constructor<?>i: cl.getConstructors())
+				if(phrase.matcher(i.toString()).find())
+					results.append(p.matcher(i.toString()).replaceAll("")+'\n');
+		}
+		if(methods.isSelected()){
+			results.append("\tMETHODS\n");
+			if(declared.isSelected()){
+				for(Method i: cl.getDeclaredMethods())
+					if(phrase.matcher(i.toString()).find())
+						results.append(p.matcher(i.toString()).replaceAll("")+'\n');
+			} else {
+				for(Method i: cl.getMethods())
+					if(phrase.matcher(i.toString()).find())
+						results.append(p.matcher(i.toString()).replaceAll("")+'\n');
+			}
+		}
+		Class<?>c=cl;
+		for(Class<?>i: cl.getInterfaces())
+			ifaces.append(i.getName()+"\n");
+		StringBuilder sb=new StringBuilder();
+		while(cl!=null){
+			sb.insert(0, cl.getName()+'\n');
+			cl=cl.getSuperclass();
+		}
+		tree.append(sb.toString());
 	}
 
 	public static void main(String[] args){
