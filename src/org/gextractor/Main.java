@@ -43,7 +43,6 @@ public class Main extends JFrame{
 		opts.setBorder(new TitledBorder("Options"));
 		opts.setLayout(new BoxLayout(opts, BoxLayout.Y_AXIS));
 		opts.add(fields);
-		fields.setSelected(true);
 		fields.setToolTipText("Print fields");
 		opts.add(ctors);
 		ctors.setSelected(true);
@@ -58,14 +57,16 @@ public class Main extends JFrame{
 		shortNames.setToolTipText("Print only simple name of type");
 		shortNames.setSelected(true);
 		opts.add(declared);
-		declared.setToolTipText("Print declared fields and methods");
+		declared.setToolTipText("Print declared fields and methods instead of accessible");
 		sep=new JSeparator();
 		sep.setMaximumSize(new Dimension(1000, 10));
 		opts.add(sep);
 		opts.add(openFile);
+		opts.add(Box.createRigidArea(new Dimension(0, 10)));
 		opts.add(rescan);
 		rescan.setEnabled(false);
-		rescan.setHorizontalGlue();
+		rescan.setMaximumSize(openFile.getMaximumSize());
+		opts.add(Box.createRigidArea(new Dimension(0,20)));
 		add(opts, BorderLayout.WEST);
 		JPanel center=new JPanel();
 		center.setLayout(new BoxLayout(center, BoxLayout.Y_AXIS));
@@ -81,7 +82,7 @@ public class Main extends JFrame{
 		tree.setEditable(false);
 		tree.setBorder(new TitledBorder("Inherits from"));
 		add(south, BorderLayout.SOUTH);
-		fileChooser.setFileFilter(new FileNameExtensionFilter("JAR file", "jar"));
+		fileChooser.setFileFilter(new FileNameExtensionFilter("JAR files", "jar"));
 
 		final ActionListener al=new ActionListener(){
 			public void actionPerformed(ActionEvent e){
