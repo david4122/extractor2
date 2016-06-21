@@ -92,7 +92,11 @@ public class Main extends JFrame{
 					JOptionPane.showMessageDialog(null, "Class not found:\n"+ex, "ClassNotFoundException", JOptionPane.ERROR_MESSAGE);
 					return;
 				}
-				printData(last);
+				try{
+					printData(last);
+				} catch(PatternSyntaxException ex){
+					JOptionPane.showMessageDialog(null, "Pattern exception: "+ex, "Pattern", JOptionPane.ERROR_MESSAGE);
+				}
 				if(!rescan.isEnabled())
 					rescan.setEnabled(true);
 			}
@@ -102,7 +106,11 @@ public class Main extends JFrame{
 
 		final ActionListener rescanListener=new ActionListener(){
 			public void actionPerformed(ActionEvent ev){
-				printData(last);
+				try{
+					printData(last);
+				} catch(PatternSyntaxException ex){
+					JOptionPane.showMessageDialog(null, "Pattern exception: "+ex, "Pattern", JOptionPane.ERROR_MESSAGE);
+				}
 			}
 		};
 		rescan.addActionListener(rescanListener);
@@ -138,6 +146,8 @@ public class Main extends JFrame{
 						JOptionPane.showMessageDialog(null, "Class not found:\n"+file+' '+ex, "ClassNotFoundException", JOptionPane.ERROR_MESSAGE);
 					} catch(MalformedURLException ex){
 						JOptionPane.showMessageDialog(null, "URL malformed!", "MalformedURLException", JOptionPane.ERROR_MESSAGE);
+					} catch(PatternSyntaxException ex){
+						JOptionPane.showMessageDialog(null, "Pattern exception: "+ex, "Pattern", JOptionPane.ERROR_MESSAGE);
 					} catch(Exception ex){
 						JOptionPane.showMessageDialog(null, "EXCEPTION: "+ex, "Exception", JOptionPane.ERROR_MESSAGE);
 					}
@@ -148,7 +158,7 @@ public class Main extends JFrame{
 		setVisible(true);
 	}
 
-	void printData(Class<?>cl){
+	void printData(Class<?>cl)throws PatternSyntaxException{
 		results.setText("");
 		ifaces.setText("");
 		tree.setText("");
