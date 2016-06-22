@@ -80,7 +80,7 @@ public class Main extends JFrame{
 		ifaces.setBorder(new TitledBorder("Implemented interfaces"));
 		south.add(tree);
 		tree.setEditable(false);
-		tree.setBorder(new TitledBorder("Inherits from"));
+		tree.setBorder(new TitledBorder("Hierarchy"));
 		add(south, BorderLayout.SOUTH);
 		fileChooser.setFileFilter(new FileNameExtensionFilter("JAR files", "jar"));
 
@@ -209,12 +209,10 @@ public class Main extends JFrame{
 		Class<?>c=cl;
 		for(Class<?>i: cl.getInterfaces())
 			ifaces.append(i.getName()+"\n");
-		StringBuilder sb=new StringBuilder();
 		while(cl!=null){
-			sb.insert(0, cl.getName()+'\n');
+			tree.insert(cl.getName()+'\n', 0);
 			cl=cl.getSuperclass();
 		}
-		tree.append(sb.toString());
 	}
 
 	public static void main(String[] args){
