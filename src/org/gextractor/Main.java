@@ -10,6 +10,9 @@ import java.util.regex.*;
 import java.io.*;
 import java.net.*;
 import javax.swing.filechooser.*;
+import java.awt.dnd.*;
+import java.awt.datatransfer.*;
+import java.util.*;
 
 public class Main extends JFrame{
 	JTextField query=new JTextField(20);
@@ -33,6 +36,36 @@ public class Main extends JFrame{
 		setSize(800, 700);
 		setLocation(50,50);
 		setLayout(new BorderLayout());
+		setDropTarget(new DropTarget(){
+			public void drop(DropTargetDropEvent e){
+				try{
+					e.acceptDrop(DnDConstants.ACTION_COPY);
+					java.util.List<File>files=(java.util.List<File>)e.getTransferable().getTransferData(DataFlavor.javaFileListFlavor);
+					if(files.size()!=1){
+						JOptionPane.showMessageDialog(null, "You can choose only one file!", "Error", JOptionPane.ERROR_MESSAGE);
+						return;
+					}
+					String className=JOptionPane.showInputDialog(null, "Enter full class name", "");
+					URL url=files.get(0).toURL();
+					last=new URLClassLoader(new URL[]{url}).loadClass(className);
+					printData(last);
+					if(!rescan.isEnabled())
+						rescan.setEnabled(true);
+				} catch(NoClassDefFoundError er){
+					JOptionPane.showMessageDialog(null, "Class def not found:\n"+er, "ERROR", JOptionPane.ERROR_MESSAGE);
+				} catch(ClassNotFoundException ex){
+					JOptionPane.showMessageDialog(null, "Class not found: "+ex, "ClassNotFoundException", JOptionPane.ERROR_MESSAGE);
+				} catch(MalformedURLException ex){
+					JOptionPane.showMessageDialog(null, "URL malformed!", "MalformedURLException", JOptionPane.ERROR_MESSAGE);
+				} catch(UnsupportedFlavorException ex){
+					JOptionPane.showMessageDialog(null, ""+ex, "Exception", JOptionPane.ERROR_MESSAGE);
+				} catch(PatternSyntaxException ex){
+					JOptionPane.showMessageDialog(null, "Pattern exception: "+ex, "Pattern", JOptionPane.ERROR_MESSAGE);
+				} catch(Exception ex){
+					JOptionPane.showMessageDialog(null, "EXCEPTION: "+ex, "Exception", JOptionPane.ERROR_MESSAGE);
+				}
+			}
+		});
 		JPanel topbar=new JPanel(new FlowLayout());
 		topbar.add(new JLabel("Full class name: "));
 		topbar.add(query);
@@ -88,12 +121,10 @@ public class Main extends JFrame{
 			public void actionPerformed(ActionEvent e){
 				try{
 					last=Class.forName(query.getText());
+					printData(last);
 				} catch(ClassNotFoundException ex){
 					JOptionPane.showMessageDialog(null, "Class not found:\n"+ex, "ClassNotFoundException", JOptionPane.ERROR_MESSAGE);
 					return;
-				}
-				try{
-					printData(last);
 				} catch(PatternSyntaxException ex){
 					JOptionPane.showMessageDialog(null, "Pattern exception: "+ex, "Pattern", JOptionPane.ERROR_MESSAGE);
 				}
@@ -131,7 +162,7 @@ public class Main extends JFrame{
 		openFile.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent e){
 				int respond=fileChooser.showOpenDialog(null);
-				if(respond==JFileChooser.APPROVE_OPTION){
+				if(respond!=JFileChooser.APPROVE_OPTION){
 					File file=fileChooser.getSelectedFile();
 					String className=JOptionPane.showInputDialog(null, "Enter full class name", "");
 					try{
