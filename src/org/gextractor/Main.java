@@ -160,7 +160,7 @@ public class Main extends JFrame{
 		openFile.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent e){
 				int respond=fileChooser.showOpenDialog(null);
-				if(respond!=JFileChooser.APPROVE_OPTION){
+				if(respond==JFileChooser.APPROVE_OPTION){
 					File file=fileChooser.getSelectedFile();
 					String className=JOptionPane.showInputDialog(null, "Enter full class name", "");
 					try{
