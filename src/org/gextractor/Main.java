@@ -154,6 +154,7 @@ public class Main extends JFrame{
 					for(int i=0;i<files.size();i++)
 						urls[i]=files.get(i).toURL();
 					last=new URLClassLoader(urls).loadClass(className);
+					addToHistory(last);
 					scan(last);
 					if(!rescan.isEnabled())
 						rescan.setEnabled(true);
@@ -188,6 +189,7 @@ public class Main extends JFrame{
 			public void actionPerformed(ActionEvent e){
 				try{
 					last=Class.forName(query.getText());
+					addToHistory(last);
 					scan(last);
 				} catch(ClassNotFoundException ex){
 					JOptionPane.showMessageDialog(null, "Class not found:\n"+ex, "ClassNotFoundException", JOptionPane.ERROR_MESSAGE);
@@ -222,6 +224,7 @@ public class Main extends JFrame{
 					try{
 						URL url=file.toURL();
 						last=new URLClassLoader(new URL[]{url}).loadClass(className);
+						addToHistory(last);
 						scan(last);
 						if(!rescan.isEnabled())
 							rescan.setEnabled(true);
@@ -260,12 +263,6 @@ public class Main extends JFrame{
 		query.setText(cl.getName());
 		Pattern p;
 		Pattern phrase;
-		PrintWriter history=null;
-		try {
-			history=new PrintWriter(new FileOutputStream("hist", true));
-		} catch(FileNotFoundException e){
-			JOptionPane.showMessageDialog(null, "No history file", "Error", JOptionPane.ERROR_MESSAGE);
-		}
 		if(searchPhrase.getText().length()>0)
 			phrase=Pattern.compile(searchPhrase.getText());
 		else
@@ -314,8 +311,16 @@ public class Main extends JFrame{
 			tree.insert(cl.getName()+'\n', 0);
 			c=c.getSuperclass();
 		}
-		history.println(cl.getName());
-		history.close();
+	}
+	
+	void addToHistory(Class<?>cl){
+		try {
+			PrintWriter history=new PrintWriter(new FileOutputStream("hist", true));
+			history.println(cl.getName());
+			history.close();
+		} catch(FileNotFoundException e){
+			JOptionPane.showMessageDialog(null, "No history file", "Error", JOptionPane.ERROR_MESSAGE);
+		}
 	}
 
 	public static void main(String[] args){
