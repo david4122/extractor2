@@ -14,7 +14,62 @@ import java.awt.dnd.*;
 import java.awt.datatransfer.*;
 import java.util.*;
 
+
 public class Main extends JFrame{
+
+	class HistWindow extends JFrame {
+		JList list=new JList();
+		DefaultListModel lmodel=new DefaultListModel();
+		JButton clear=new JButton("Clear history");
+		JTextField tf=new JTextField(20);
+	
+		HistWindow(){
+			super("History");
+			setSize(500, 400);
+			setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+			setLayout(new BorderLayout());
+			add(new JScrollPane(list), BorderLayout.CENTER);
+			list.setModel(lmodel);
+			fillList();
+			JPanel topbar=new JPanel(new FlowLayout());
+			add(topbar, BorderLayout.NORTH);
+			topbar.add(clear);
+			topbar.add(new JLabel("Search in history"));
+			topbar.add(tf);
+			
+			clear.addActionListener(new ActionListener(){
+				public void actionPerformed(ActionEvent e){
+					lmodel.clear();
+					hist.delete();
+				}
+			});
+			tf.addActionListener(new ActionListener(){
+				public void actionPerformed(ActionEvent e){
+					lmodel.clear();
+					fillList();
+				}
+			});
+		}
+		
+		void fillList(){
+			try{
+				BufferedReader history=new BufferedReader(new FileReader(hist));
+				String line;
+				Pattern p=Pattern.compile(tf.getText());
+				while((line=history.readLine())!=null){
+					if(p.matcher(line).find())
+						lmodel.addElement(line);
+				}
+				history.close();
+				setVisible(true);
+			} catch(FileNotFoundException e){
+				JOptionPane.showMessageDialog(null, "No history", "Error", JOptionPane.ERROR_MESSAGE);
+			} catch(IOException e){
+				JOptionPane.showMessageDialog(null, "Error while reading file", "Error", JOptionPane.ERROR_MESSAGE);
+			}
+		}
+	}
+
 	JTextField query=new JTextField(20);
 	JTextArea results=new JTextArea();
 	JCheckBox fields=new JCheckBox("Fields");
@@ -28,6 +83,8 @@ public class Main extends JFrame{
 	JFileChooser fileChooser=new JFileChooser();
 	JButton openFile=new JButton("<html><center>Load class from<br/>*.jar file");
 	JButton rescan=new JButton("Rescan");
+	File hist=new File("hist");
+	JButton showHist=new JButton("Show history");
 	Class<?>last;
 
 	Main(){
@@ -66,6 +123,9 @@ public class Main extends JFrame{
 		opts.add(sep);
 		opts.add(openFile);
 		opts.add(Box.createRigidArea(new Dimension(0, 10)));
+		opts.add(showHist);
+		showHist.setMaximumSize(openFile.getMaximumSize());
+		opts.add(Box.createRigidArea(new Dimension(0, 10)));
 		opts.add(rescan);
 		rescan.setEnabled(false);
 		rescan.setMaximumSize(openFile.getMaximumSize());
@@ -85,7 +145,7 @@ public class Main extends JFrame{
 					for(int i=0;i<files.size();i++)
 						urls[i]=files.get(i).toURL();
 					last=new URLClassLoader(urls).loadClass(className);
-					printData(last);
+					scan(last);
 					if(!rescan.isEnabled())
 						rescan.setEnabled(true);
 				} catch(NoClassDefFoundError er){
@@ -119,7 +179,7 @@ public class Main extends JFrame{
 			public void actionPerformed(ActionEvent e){
 				try{
 					last=Class.forName(query.getText());
-					printData(last);
+					scan(last);
 				} catch(ClassNotFoundException ex){
 					JOptionPane.showMessageDialog(null, "Class not found:\n"+ex, "ClassNotFoundException", JOptionPane.ERROR_MESSAGE);
 					return;
@@ -136,26 +196,13 @@ public class Main extends JFrame{
 		final ActionListener rescanListener=new ActionListener(){
 			public void actionPerformed(ActionEvent ev){
 				try{
-					printData(last);
+					scan(last);
 				} catch(PatternSyntaxException ex){
 					JOptionPane.showMessageDialog(null, "Pattern exception: "+ex, "Pattern", JOptionPane.ERROR_MESSAGE);
 				}
 			}
 		};
 		rescan.addActionListener(rescanListener);
-		
-		class CBChangeListener implements ChangeListener{
-			public void stateChanged(ChangeEvent e){
-				if(query.getText().length()>0)
-					rescanListener.actionPerformed(new ActionEvent(rescanListener, 0, ""));
-			}
-		}
-		CBChangeListener cbcl=new CBChangeListener();
-		fields.addChangeListener(cbcl);
-		ctors.addChangeListener(cbcl);
-		methods.addChangeListener(cbcl);
-		shortNames.addChangeListener(cbcl);
-		declared.addChangeListener(cbcl);
 
 		openFile.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent e){
@@ -166,7 +213,7 @@ public class Main extends JFrame{
 					try{
 						URL url=file.toURL();
 						last=new URLClassLoader(new URL[]{url}).loadClass(className);
-						printData(last);
+						scan(last);
 						if(!rescan.isEnabled())
 							rescan.setEnabled(true);
 					} catch(NoClassDefFoundError er){
@@ -183,17 +230,33 @@ public class Main extends JFrame{
 				}
 			}
 		});
+		
+		showHist.addActionListener(new ActionListener(){
+			public void actionPerformed(ActionEvent e){
+				SwingUtilities.invokeLater(new Runnable(){
+					public void run(){
+						new HistWindow();
+					}
+				});
+			}
+		});
 
 		setVisible(true);
 	}
 
-	void printData(Class<?>cl)throws PatternSyntaxException{
+	void scan(Class<?>cl)throws PatternSyntaxException{
 		results.setText("");
 		ifaces.setText("");
 		tree.setText("");
 		query.setText(cl.getName());
 		Pattern p;
 		Pattern phrase;
+		PrintWriter history=null;
+		try {
+			history=new PrintWriter(new FileOutputStream("hist", true));
+		} catch(FileNotFoundException e){
+			JOptionPane.showMessageDialog(null, "No history file", "Error", JOptionPane.ERROR_MESSAGE);
+		}
 		if(searchPhrase.getText().length()>0)
 			phrase=Pattern.compile(searchPhrase.getText());
 		else
@@ -238,10 +301,12 @@ public class Main extends JFrame{
 		Class<?>c=cl;
 		for(Class<?>i: cl.getInterfaces())
 			ifaces.append(i.getName()+"\n");
-		while(cl!=null){
+		while(c!=null){
 			tree.insert(cl.getName()+'\n', 0);
-			cl=cl.getSuperclass();
+			c=c.getSuperclass();
 		}
+		history.println(cl.getName());
+		history.close();
 	}
 
 	public static void main(String[] args){
