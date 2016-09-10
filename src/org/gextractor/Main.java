@@ -18,8 +18,8 @@ import java.util.*;
 public class Main extends JFrame{
 
 	class HistWindow extends JFrame {
-		JList list=new JList();
-		DefaultListModel lmodel=new DefaultListModel();
+		JList<String>list=new JList();
+		DefaultListModel<String>lmodel=new DefaultListModel();
 		JButton clear=new JButton("Clear history");
 		JTextField tf=new JTextField(20);
 	
@@ -37,6 +37,15 @@ public class Main extends JFrame{
 			topbar.add(new JLabel("Search in history"));
 			topbar.add(tf);
 			
+			list.addListSelectionListener(new ListSelectionListener(){
+				public void valueChanged(ListSelectionEvent e){
+					try{
+						Main.this.scan(Class.forName(lmodel.getElementAt(list.getSelectedIndex())));
+					} catch(ClassNotFoundException ex){
+						JOptionPane.showMessageDialog(null, "Class not found", "Error", JOptionPane.ERROR_MESSAGE);
+					}
+				}
+			});
 			clear.addActionListener(new ActionListener(){
 				public void actionPerformed(ActionEvent e){
 					lmodel.clear();
