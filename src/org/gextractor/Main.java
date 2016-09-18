@@ -26,6 +26,7 @@ public class Main extends JFrame{
 		HistWindow(){
 			super("History");
 			setSize(500, 400);
+			setLocation(300, 300);
 			setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 			setLayout(new BorderLayout());
 			add(new JScrollPane(list), BorderLayout.CENTER);
@@ -80,7 +81,8 @@ public class Main extends JFrame{
 	}
 
 	JTextField query=new JTextField(20);
-	JTextArea results=new JTextArea();
+	DefaultListModel<String>resultsModel=new DefaultListModel<String>();
+	JList<String>results=new JList<String>(resultsModel);
 	JCheckBox fields=new JCheckBox("Fields");
 	JCheckBox ctors=new JCheckBox("Constructors");
 	JCheckBox methods=new JCheckBox("Methods");
@@ -143,7 +145,6 @@ public class Main extends JFrame{
 		JPanel center=new JPanel();
 		center.setLayout(new BoxLayout(center, BoxLayout.Y_AXIS));
 		center.add(new JScrollPane(results));
-		results.setEditable(false);
 		results.setDropTarget(new DropTarget(){
 			public void drop(DropTargetDropEvent e){
 				try{
@@ -257,7 +258,7 @@ public class Main extends JFrame{
 	}
 
 	void scan(Class<?>cl)throws PatternSyntaxException{
-		results.setText("");
+		resultsModel.clear();
 		ifaces.setText("");
 		tree.setText("");
 		query.setText(cl.getName());
@@ -274,34 +275,34 @@ public class Main extends JFrame{
 			p=Pattern.compile("");
 		String s;
 		if(fields.isSelected()){
-			results.append("\tFIELDS:\n");
+			resultsModel.addElement(String.format("<html><div style=\"margin: 5px; width: %d; text-align: center;\">FIELDS</div></html>", results.getWidth()-20));
 			if(declared.isSelected()){
 				for(Field i: cl.getDeclaredFields())
 					if(phrase.matcher(i.toString()).find())
-						results.append(p.matcher(i.toString()).replaceAll("")+'\n');
+						resultsModel.addElement(p.matcher(i.toString()).replaceAll("")+'\n');
 			} else{
 				for(Field i: cl.getFields()){
 					if(phrase.matcher(i.toString()).find())
-						results.append(p.matcher(i.toString()).replaceAll("")+'\n');
+						resultsModel.addElement(p.matcher(i.toString()).replaceAll("")+'\n');
 				}
 			}
 		}
 		if(ctors.isSelected()){
-			results.append("\tCONSTRUCTORS:\n");
+			resultsModel.addElement(String.format("<html><div style=\"margin: 5px; width: %d; text-align: center;\">CONSTRUCTORS</div></html>", results.getWidth()-20));
 			for(Constructor<?>i: cl.getConstructors())
 				if(phrase.matcher(i.toString()).find())
-					results.append(p.matcher(i.toString()).replaceAll("")+'\n');
+					resultsModel.addElement(p.matcher(i.toString()).replaceAll("")+'\n');
 		}
 		if(methods.isSelected()){
-			results.append("\tMETHODS\n");
+			resultsModel.addElement(String.format("<html><div style=\"margin: 5px; width: %d; text-align: center;\">METHODS</div></html>", results.getWidth()-20));
 			if(declared.isSelected()){
 				for(Method i: cl.getDeclaredMethods())
 					if(phrase.matcher(i.toString()).find())
-						results.append(p.matcher(i.toString()).replaceAll("")+'\n');
+						resultsModel.addElement(p.matcher(i.toString()).replaceAll("")+'\n');
 			} else {
 				for(Method i: cl.getMethods())
 					if(phrase.matcher(i.toString()).find())
-						results.append(p.matcher(i.toString()).replaceAll("")+'\n');
+						resultsModel.addElement(p.matcher(i.toString()).replaceAll("")+'\n');
 			}
 		}
 		Class<?>c=cl;
