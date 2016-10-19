@@ -101,6 +101,11 @@ public class Main extends JFrame{
 	Main(){
 		super("Java Class Extractor");
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		try{
+			UIManager.setLookAndFeel("com.sun.java.swing.plaf.gtk.GTKLookAndFeel");
+		} catch(Exception e){
+			throw new RuntimeException(e);
+		}
 		setSize(800, 700);
 		setLocation(50,50);
 		setLayout(new BorderLayout());
@@ -309,7 +314,7 @@ public class Main extends JFrame{
 		for(Class<?>i: cl.getInterfaces())
 			ifaces.append(i.getName()+"\n");
 		while(c!=null){
-			tree.insert(cl.getName()+'\n', 0);
+			tree.insert(c.getName()+'\n', 0);
 			c=c.getSuperclass();
 		}
 	}
