@@ -104,7 +104,7 @@ public class Main extends JFrame{
 		try{
 			UIManager.setLookAndFeel("com.sun.java.swing.plaf.gtk.GTKLookAndFeel");
 		} catch(Exception e){
-			throw new RuntimeException(e);
+
 		}
 		setSize(800, 700);
 		setLocation(50,50);
