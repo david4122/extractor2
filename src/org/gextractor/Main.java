@@ -13,7 +13,7 @@ import javax.swing.filechooser.*;
 import java.awt.dnd.*;
 import java.awt.datatransfer.*;
 import java.util.*;
-
+import javax.imageio.*;
 
 public class Main extends JFrame{
 
@@ -26,12 +26,12 @@ public class Main extends JFrame{
 		HistWindow(){
 			super("History");
 			setSize(500, 400);
-			setLocation(300, 300);
+			setLocation(300, 500);
 			setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 			setLayout(new BorderLayout());
 			add(new JScrollPane(list), BorderLayout.CENTER);
 			list.setModel(lmodel);
-			fillList();
+			loadHistory();
 			JPanel topbar=new JPanel(new FlowLayout());
 			add(topbar, BorderLayout.NORTH);
 			topbar.add(clear);
@@ -56,12 +56,12 @@ public class Main extends JFrame{
 			tf.addActionListener(new ActionListener(){
 				public void actionPerformed(ActionEvent e){
 					lmodel.clear();
-					fillList();
+					loadHistory();
 				}
 			});
 		}
 		
-		void fillList(){
+		void loadHistory(){
 			try{
 				BufferedReader history=new BufferedReader(new FileReader(hist));
 				String line;
@@ -102,7 +102,10 @@ public class Main extends JFrame{
 		super("Java Class Extractor");
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		try{
+			setIconImage(ImageIO.read(getClass().getResource("/resources/extract.png")));
 			UIManager.setLookAndFeel("com.sun.java.swing.plaf.gtk.GTKLookAndFeel");
+		} catch(IOException e){
+			System.err.println("Could not load icon image");
 		} catch(Exception e){
 
 		}
