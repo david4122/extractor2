@@ -109,8 +109,8 @@ public class Main extends JFrame{
 		} catch(Exception e){
 
 		}
-		setSize(800, 700);
-		setLocation(50,50);
+		setSize(800, 550);
+		setLocation(100, 100);
 		setLayout(new BorderLayout());
 		JPanel topbar=new JPanel(new FlowLayout());
 		topbar.add(new JLabel("Full class name: "));
@@ -320,6 +320,8 @@ public class Main extends JFrame{
 			tree.insert(c.getName()+'\n', 0);
 			c=c.getSuperclass();
 		}
+		if(cl.isInterface())
+			JOptionPane.showMessageDialog(this, "This is an intefrace!", "Java class extractor", JOptionPane.INFORMATION_MESSAGE);
 	}
 	
 	void addToHistory(Class<?>cl){
