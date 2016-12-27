@@ -25,6 +25,11 @@ public class Main extends JFrame{
 	
 		HistWindow(){
 			super("History");
+			try{
+				setIconImage(ImageIO.read(getClass().getResource("/resources/extract.png")));
+			} catch(IOException e){
+				System.err.println("Cannot load icon image: "+e);
+			}
 			setSize(500, 400);
 			setLocation(300, 500);
 			setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
