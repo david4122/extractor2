@@ -48,7 +48,7 @@ public class Main extends JFrame{
 					try{
 						Main.this.scan(Class.forName(lmodel.getElementAt(list.getSelectedIndex())));
 					} catch(ClassNotFoundException ex){
-						JOptionPane.showMessageDialog(null, "Class not found", "Error", JOptionPane.ERROR_MESSAGE);
+						JOptionPane.showMessageDialog(HistWindow.this, "Class not found", "Error", JOptionPane.ERROR_MESSAGE);
 					}
 				}
 			});
@@ -78,9 +78,9 @@ public class Main extends JFrame{
 				history.close();
 				setVisible(true);
 			} catch(FileNotFoundException e){
-				JOptionPane.showMessageDialog(null, "No history", "Error", JOptionPane.ERROR_MESSAGE);
+				JOptionPane.showMessageDialog(this, "No history", "Error", JOptionPane.ERROR_MESSAGE);
 			} catch(IOException e){
-				JOptionPane.showMessageDialog(null, "Error while reading file", "Error", JOptionPane.ERROR_MESSAGE);
+				JOptionPane.showMessageDialog(this, "Error while reading file", "Error", JOptionPane.ERROR_MESSAGE);
 			}
 		}
 	}
@@ -163,7 +163,7 @@ public class Main extends JFrame{
 				try{
 					e.acceptDrop(DnDConstants.ACTION_COPY);
 					java.util.List<File>files=(java.util.List<File>)e.getTransferable().getTransferData(DataFlavor.javaFileListFlavor);
-					String className=JOptionPane.showInputDialog(null, "Enter full class name", "");
+					String className=JOptionPane.showInputDialog(Main.this, "Enter full class name", "");
 					URL urls[]=new URL[files.size()];
 					for(int i=0;i<files.size();i++)
 						urls[i]=files.get(i).toURL();
@@ -173,17 +173,17 @@ public class Main extends JFrame{
 					if(!rescan.isEnabled())
 						rescan.setEnabled(true);
 				} catch(NoClassDefFoundError er){
-					JOptionPane.showMessageDialog(null, "Class def not found:\n"+er, "ERROR", JOptionPane.ERROR_MESSAGE);
+					JOptionPane.showMessageDialog(Main.this, "Class def not found:\n"+er, "ERROR", JOptionPane.ERROR_MESSAGE);
 				} catch(ClassNotFoundException ex){
-					JOptionPane.showMessageDialog(null, "Class not found: "+ex, "ClassNotFoundException", JOptionPane.ERROR_MESSAGE);
+					JOptionPane.showMessageDialog(Main.this, "Class not found: "+ex, "ClassNotFoundException", JOptionPane.ERROR_MESSAGE);
 				} catch(MalformedURLException ex){
-					JOptionPane.showMessageDialog(null, "URL malformed!", "MalformedURLException", JOptionPane.ERROR_MESSAGE);
+					JOptionPane.showMessageDialog(Main.this, "URL malformed!", "MalformedURLException", JOptionPane.ERROR_MESSAGE);
 				} catch(UnsupportedFlavorException ex){
-					JOptionPane.showMessageDialog(null, ""+ex, "Exception", JOptionPane.ERROR_MESSAGE);
+					JOptionPane.showMessageDialog(Main.this, ""+ex, "Exception", JOptionPane.ERROR_MESSAGE);
 				} catch(PatternSyntaxException ex){
-					JOptionPane.showMessageDialog(null, "Pattern exception: "+ex, "Pattern", JOptionPane.ERROR_MESSAGE);
+					JOptionPane.showMessageDialog(Main.this, "Pattern exception: "+ex, "Pattern", JOptionPane.ERROR_MESSAGE);
 				} catch(Exception ex){
-					JOptionPane.showMessageDialog(null, "EXCEPTION: "+ex, "Exception", JOptionPane.ERROR_MESSAGE);
+					JOptionPane.showMessageDialog(Main.this, "EXCEPTION: "+ex, "Exception", JOptionPane.ERROR_MESSAGE);
 				}
 			}
 		});
@@ -206,10 +206,10 @@ public class Main extends JFrame{
 					addToHistory(last);
 					scan(last);
 				} catch(ClassNotFoundException ex){
-					JOptionPane.showMessageDialog(null, "Class not found:\n"+ex, "ClassNotFoundException", JOptionPane.ERROR_MESSAGE);
+					JOptionPane.showMessageDialog(Main.this, "Class not found:\n"+ex, "ClassNotFoundException", JOptionPane.ERROR_MESSAGE);
 					return;
 				} catch(PatternSyntaxException ex){
-					JOptionPane.showMessageDialog(null, "Pattern exception: "+ex, "Pattern", JOptionPane.ERROR_MESSAGE);
+					JOptionPane.showMessageDialog(Main.this, "Pattern exception: "+ex, "Pattern", JOptionPane.ERROR_MESSAGE);
 				}
 				if(!rescan.isEnabled())
 					rescan.setEnabled(true);
@@ -223,7 +223,7 @@ public class Main extends JFrame{
 				try{
 					scan(last);
 				} catch(PatternSyntaxException ex){
-					JOptionPane.showMessageDialog(null, "Pattern exception: "+ex, "Pattern", JOptionPane.ERROR_MESSAGE);
+					JOptionPane.showMessageDialog(Main.this, "Pattern exception: "+ex, "Pattern", JOptionPane.ERROR_MESSAGE);
 				}
 			}
 		};
@@ -231,10 +231,10 @@ public class Main extends JFrame{
 
 		openFile.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent e){
-				int respond=fileChooser.showOpenDialog(null);
+				int respond=fileChooser.showOpenDialog(Main.this);
 				if(respond==JFileChooser.APPROVE_OPTION){
 					File file=fileChooser.getSelectedFile();
-					String className=JOptionPane.showInputDialog(null, "Enter full class name", "");
+					String className=JOptionPane.showInputDialog(Main.this, "Enter full class name", "");
 					try{
 						URL url=file.toURL();
 						last=new URLClassLoader(new URL[]{url}).loadClass(className);
@@ -243,15 +243,15 @@ public class Main extends JFrame{
 						if(!rescan.isEnabled())
 							rescan.setEnabled(true);
 					} catch(NoClassDefFoundError er){
-						JOptionPane.showMessageDialog(null, "Class def not found:\n"+er, "ERROR", JOptionPane.ERROR_MESSAGE);
+						JOptionPane.showMessageDialog(Main.this, "Class def not found:\n"+er, "ERROR", JOptionPane.ERROR_MESSAGE);
 					} catch(ClassNotFoundException ex){
-						JOptionPane.showMessageDialog(null, "Class not found:\n"+file+' '+ex, "ClassNotFoundException", JOptionPane.ERROR_MESSAGE);
+						JOptionPane.showMessageDialog(Main.this, "Class not found:\n"+file+' '+ex, "ClassNotFoundException", JOptionPane.ERROR_MESSAGE);
 					} catch(MalformedURLException ex){
-						JOptionPane.showMessageDialog(null, "URL malformed!", "MalformedURLException", JOptionPane.ERROR_MESSAGE);
+						JOptionPane.showMessageDialog(Main.this, "URL malformed!", "MalformedURLException", JOptionPane.ERROR_MESSAGE);
 					} catch(PatternSyntaxException ex){
-						JOptionPane.showMessageDialog(null, "Pattern exception: "+ex, "Pattern", JOptionPane.ERROR_MESSAGE);
+						JOptionPane.showMessageDialog(Main.this, "Pattern exception: "+ex, "Pattern", JOptionPane.ERROR_MESSAGE);
 					} catch(Exception ex){
-						JOptionPane.showMessageDialog(null, "EXCEPTION: "+ex, "Exception", JOptionPane.ERROR_MESSAGE);
+						JOptionPane.showMessageDialog(Main.this, "EXCEPTION: "+ex, "Exception", JOptionPane.ERROR_MESSAGE);
 					}
 				}
 			}
@@ -326,7 +326,7 @@ public class Main extends JFrame{
 			c=c.getSuperclass();
 		}
 		if(cl.isInterface())
-			JOptionPane.showMessageDialog(this, "This is an intefrace!", "Java class extractor", JOptionPane.INFORMATION_MESSAGE);
+			JOptionPane.showMessageDialog(Main.this, "This is an intefrace!", "Java class extractor", JOptionPane.INFORMATION_MESSAGE);
 	}
 	
 	void addToHistory(Class<?>cl){
@@ -335,7 +335,7 @@ public class Main extends JFrame{
 			history.println(cl.getName());
 			history.close();
 		} catch(FileNotFoundException e){
-			JOptionPane.showMessageDialog(null, "No history file", "Error", JOptionPane.ERROR_MESSAGE);
+			JOptionPane.showMessageDialog(Main.this, "No history file", "Error", JOptionPane.ERROR_MESSAGE);
 		}
 	}
 
