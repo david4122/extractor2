@@ -46,7 +46,8 @@ public class Main extends JFrame{
 			list.addListSelectionListener(new ListSelectionListener(){
 				public void valueChanged(ListSelectionEvent e){
 					try{
-						Main.this.scan(Class.forName(lmodel.getElementAt(list.getSelectedIndex())));
+						Main.this.last=Class.forName(lmodel.getElementAt(list.getSelectedIndex()));
+						Main.this.scan(Main.this.last);
 					} catch(ClassNotFoundException ex){
 						JOptionPane.showMessageDialog(HistWindow.this, "Class not found", "Error", JOptionPane.ERROR_MESSAGE);
 					}
@@ -98,9 +99,9 @@ public class Main extends JFrame{
 	JCheckBox declared=new JCheckBox("Declared");
 	JFileChooser fileChooser=new JFileChooser();
 	JButton openFile=new JButton("<html><center>Load class from<br/>*.jar file");
-	JButton rescan=new JButton("Rescan");
+	JButton rescan=new JButton();
 	File hist=new File("hist");
-	JButton showHist=new JButton("Show history");
+	JButton showHist=new JButton();
 	Class<?>last;
 
 	Main(){
@@ -108,11 +109,8 @@ public class Main extends JFrame{
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		try{
 			setIconImage(ImageIO.read(getClass().getResource("/resources/extract.png")));
-			UIManager.setLookAndFeel("com.sun.java.swing.plaf.gtk.GTKLookAndFeel");
 		} catch(IOException e){
-			System.err.println("Could not load icon image");
-		} catch(Exception e){
-
+			System.err.println("Could not load icon image: "+e);
 		}
 		setSize(800, 550);
 		setLocation(100, 100);
@@ -120,6 +118,7 @@ public class Main extends JFrame{
 		JPanel topbar=new JPanel(new FlowLayout());
 		topbar.add(new JLabel("Full class name: "));
 		topbar.add(query);
+		query.requestFocus(true);
 		topbar.add(new JLabel("Keyword or regex to search for:"));
 		topbar.add(searchPhrase);
 		add(topbar, BorderLayout.NORTH);
@@ -151,14 +150,13 @@ public class Main extends JFrame{
 		showHist.setMaximumSize(openFile.getMaximumSize());
 		opts.add(Box.createRigidArea(new Dimension(0, 10)));
 		opts.add(rescan);
-		rescan.setEnabled(false);
 		rescan.setMaximumSize(openFile.getMaximumSize());
 		opts.add(Box.createRigidArea(new Dimension(0,20)));
 		add(opts, BorderLayout.WEST);
 		JPanel center=new JPanel();
 		center.setLayout(new BoxLayout(center, BoxLayout.Y_AXIS));
 		center.add(new JScrollPane(results));
-		results.setDropTarget(new DropTarget(){
+			results.setDropTarget(new DropTarget(){
 			public void drop(DropTargetDropEvent e){
 				try{
 					e.acceptDrop(DnDConstants.ACTION_COPY);
@@ -170,8 +168,6 @@ public class Main extends JFrame{
 					last=new URLClassLoader(urls).loadClass(className);
 					addToHistory(last);
 					scan(last);
-					if(!rescan.isEnabled())
-						rescan.setEnabled(true);
 				} catch(NoClassDefFoundError er){
 					JOptionPane.showMessageDialog(Main.this, "Class def not found:\n"+er, "ERROR", JOptionPane.ERROR_MESSAGE);
 				} catch(ClassNotFoundException ex){
@@ -211,15 +207,14 @@ public class Main extends JFrame{
 				} catch(PatternSyntaxException ex){
 					JOptionPane.showMessageDialog(Main.this, "Pattern exception: "+ex, "Pattern", JOptionPane.ERROR_MESSAGE);
 				}
-				if(!rescan.isEnabled())
-					rescan.setEnabled(true);
 			}
 		};
 		query.addActionListener(al);
 		searchPhrase.addActionListener(al);
 
-		final ActionListener rescanListener=new ActionListener(){
-			public void actionPerformed(ActionEvent ev){
+		Action rescanAction=new AbstractAction("Rescan"){
+			@Override
+			public void actionPerformed(ActionEvent e){
 				try{
 					scan(last);
 				} catch(PatternSyntaxException ex){
@@ -227,7 +222,10 @@ public class Main extends JFrame{
 				}
 			}
 		};
-		rescan.addActionListener(rescanListener);
+		rescan.setAction(rescanAction);
+		rescan.setEnabled(false);
+		rescan.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_R, KeyEvent.CTRL_DOWN_MASK), "Rescan");
+		rescan.getActionMap().put("Rescan", rescanAction);
 
 		openFile.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent e){
@@ -240,8 +238,6 @@ public class Main extends JFrame{
 						last=new URLClassLoader(new URL[]{url}).loadClass(className);
 						addToHistory(last);
 						scan(last);
-						if(!rescan.isEnabled())
-							rescan.setEnabled(true);
 					} catch(NoClassDefFoundError er){
 						JOptionPane.showMessageDialog(Main.this, "Class def not found:\n"+er, "ERROR", JOptionPane.ERROR_MESSAGE);
 					} catch(ClassNotFoundException ex){
@@ -256,8 +252,9 @@ public class Main extends JFrame{
 				}
 			}
 		});
-		
-		showHist.addActionListener(new ActionListener(){
+
+		Action histAction=new AbstractAction("Show history"){
+			@Override
 			public void actionPerformed(ActionEvent e){
 				SwingUtilities.invokeLater(new Runnable(){
 					public void run(){
@@ -265,12 +262,17 @@ public class Main extends JFrame{
 					}
 				});
 			}
-		});
-
+		};
+		showHist.setAction(histAction);
+		showHist.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_H, KeyEvent.CTRL_DOWN_MASK), "Show history");
+		showHist.getActionMap().put("Show history", histAction);
+		
 		setVisible(true);
 	}
 
 	void scan(Class<?>cl)throws PatternSyntaxException{
+		if(!rescan.isEnabled())
+			rescan.setEnabled(true);
 		resultsModel.clear();
 		ifaces.setText("");
 		tree.setText("");
@@ -288,7 +290,7 @@ public class Main extends JFrame{
 			p=Pattern.compile("");
 		String s;
 		if(fields.isSelected()){
-			resultsModel.addElement(String.format("<html><div style=\"margin: 5px; width: %d; text-align: center;\">FIELDS</div></html>", results.getWidth()-20));
+			resultsModel.addElement(String.format("<html><div style=\"margin: 5px; width: %d; text-align: center;\">FIELDS</div></html>", results.getWidth()-50));
 			if(declared.isSelected()){
 				for(Field i: cl.getDeclaredFields())
 					if(phrase.matcher(i.toString()).find())
@@ -301,13 +303,13 @@ public class Main extends JFrame{
 			}
 		}
 		if(ctors.isSelected()){
-			resultsModel.addElement(String.format("<html><div style=\"margin: 5px; width: %d; text-align: center;\">CONSTRUCTORS</div></html>", results.getWidth()-20));
+			resultsModel.addElement(String.format("<html><div style=\"margin: 5px; width: %d; text-align: center;\">CONSTRUCTORS</div></html>", results.getWidth()-50));
 			for(Constructor<?>i: cl.getConstructors())
 				if(phrase.matcher(i.toString()).find())
 					resultsModel.addElement(p.matcher(i.toString()).replaceAll("")+'\n');
 		}
 		if(methods.isSelected()){
-			resultsModel.addElement(String.format("<html><div style=\"margin: 5px; width: %d; text-align: center;\">METHODS</div></html>", results.getWidth()-20));
+			resultsModel.addElement(String.format("<html><div style=\"margin: 5px; width: %d; text-align: center;\">METHODS</div></html>", results.getWidth()-50));
 			if(declared.isSelected()){
 				for(Method i: cl.getDeclaredMethods())
 					if(phrase.matcher(i.toString()).find())
@@ -340,6 +342,11 @@ public class Main extends JFrame{
 	}
 
 	public static void main(String[] args){
+		try{
+			UIManager.setLookAndFeel("com.sun.java.swing.plaf.gtk.GTKLookAndFeel");
+		} catch(ClassNotFoundException|InstantiationException|IllegalAccessException|UnsupportedLookAndFeelException e){
+			System.err.println("Could not load GTK look and feel: "+e);
+		}
 		SwingUtilities.invokeLater(new Runnable(){
 			public void run(){
 				new Main();
