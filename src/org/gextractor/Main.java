@@ -18,8 +18,8 @@ import javax.imageio.*;
 public class Main extends JFrame{
 
 	class HistWindow extends JFrame {
-		JList<String>list=new JList();
-		DefaultListModel<String>lmodel=new DefaultListModel();
+		JList<String>list=new JList<String>();
+		DefaultListModel<String>lmodel=new DefaultListModel<String>();
 		JButton clear=new JButton("Clear history");
 		JTextField tf=new JTextField(20);
 	
@@ -94,8 +94,9 @@ public class Main extends JFrame{
 	JCheckBox methods=new JCheckBox("Methods");
 	JCheckBox shortNames=new JCheckBox("Short names");
 	JTextField searchPhrase=new JTextField(10);
+	JButton clear=new JButton();
 	JTextArea ifaces=new JTextArea();
-	JTextArea tree=new JTextArea();
+	JTextArea superclasses=new JTextArea();
 	JCheckBox declared=new JCheckBox("Declared");
 	JFileChooser fileChooser=new JFileChooser();
 	JButton openFile=new JButton("<html><center>Load class from<br/>*.jar file");
@@ -109,6 +110,7 @@ public class Main extends JFrame{
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		try{
 			setIconImage(ImageIO.read(getClass().getResource("/resources/extract.png")));
+			clear.setIcon(new ImageIcon(ImageIO.read(getClass().getResource("/resources/delete.png"))));
 		} catch(IOException e){
 			System.err.println("Could not load icon image: "+e);
 		}
@@ -120,7 +122,18 @@ public class Main extends JFrame{
 		topbar.add(query);
 		query.requestFocus(true);
 		topbar.add(new JLabel("Keyword or regex to search for:"));
-		topbar.add(searchPhrase);
+		JPanel searchPanel=new JPanel(new FlowLayout());
+		topbar.add(searchPanel);
+		((FlowLayout)(searchPanel.getLayout())).setHgap(0);
+		searchPanel.add(searchPhrase);
+		searchPanel.add(clear);
+		clear.addActionListener(new ActionListener(){
+			@Override
+			public void actionPerformed(ActionEvent e){
+				searchPhrase.setText("");
+				scan(last);
+			}
+		});
 		add(topbar, BorderLayout.NORTH);
 		JPanel opts=new JPanel();
 		opts.setBorder(new TitledBorder("Options"));
@@ -156,7 +169,7 @@ public class Main extends JFrame{
 		JPanel center=new JPanel();
 		center.setLayout(new BoxLayout(center, BoxLayout.Y_AXIS));
 		center.add(new JScrollPane(results));
-			results.setDropTarget(new DropTarget(){
+		results.setDropTarget(new DropTarget(){
 			public void drop(DropTargetDropEvent e){
 				try{
 					e.acceptDrop(DnDConstants.ACTION_COPY);
@@ -189,9 +202,9 @@ public class Main extends JFrame{
 		south.add(ifaces);
 		ifaces.setEditable(false);
 		ifaces.setBorder(new TitledBorder("Implemented interfaces"));
-		south.add(tree);
-		tree.setEditable(false);
-		tree.setBorder(new TitledBorder("Hierarchy"));
+		south.add(superclasses);
+		superclasses.setEditable(false);
+		superclasses.setBorder(new TitledBorder("Hierarchy"));
 		add(south, BorderLayout.SOUTH);
 		fileChooser.setFileFilter(new FileNameExtensionFilter("JAR files", "jar"));
 
@@ -275,7 +288,7 @@ public class Main extends JFrame{
 			rescan.setEnabled(true);
 		resultsModel.clear();
 		ifaces.setText("");
-		tree.setText("");
+		superclasses.setText("");
 		query.setText(cl.getName());
 		Pattern p;
 		Pattern phrase;
@@ -324,7 +337,7 @@ public class Main extends JFrame{
 		for(Class<?>i: cl.getInterfaces())
 			ifaces.append(i.getName()+"\n");
 		while(c!=null){
-			tree.insert(c.getName()+'\n', 0);
+			superclasses.insert(c.getName()+'\n', 0);
 			c=c.getSuperclass();
 		}
 		if(cl.isInterface())
